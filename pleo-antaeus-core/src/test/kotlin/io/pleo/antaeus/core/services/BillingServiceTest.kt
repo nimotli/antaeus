@@ -6,6 +6,7 @@ import io.mockk.verify
 import io.pleo.antaeus.core.exceptions.CurrencyMismatchException
 import io.pleo.antaeus.core.exceptions.CustomerNotFoundException
 import io.pleo.antaeus.core.exceptions.InsufficientBalanceException
+import io.pleo.antaeus.core.exceptions.NetworkException
 import io.pleo.antaeus.core.external.CurrencyConverter
 import io.pleo.antaeus.core.helper.PaymentProviderWrapper
 import io.pleo.antaeus.models.InvoiceStatus
@@ -82,6 +83,18 @@ class BillingServiceTest {
         verify { customerService.fetch(aPendingInvoice.customerId) }
         verify { invoiceService.create(aUsdPendingInvoice) }
         verify { currencyConverter.convertMoneyTo(aPendingInvoice.amount, aUsdCustomer.currency) }
+    }
+
+    @Test
+    fun `will handle network exception`() {
+        every { paymentProviderWrapper.charge(aPendingInvoice) } throws NetworkException()
+        every { invoiceService.fetchPending() } returns listOf(aPendingInvoice)
+        every { invoiceService.update(aFailedInvoice) } returns aFailedInvoice
+
+        billingService.processInvoices()
+
+        verify{ paymentProviderWrapper.charge(aPendingInvoice) }
+        verify { invoiceService.update(aFailedInvoice) }
     }
 
 }
