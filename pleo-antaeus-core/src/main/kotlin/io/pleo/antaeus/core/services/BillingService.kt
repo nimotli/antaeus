@@ -1,5 +1,6 @@
 package io.pleo.antaeus.core.services
 
+import io.pleo.antaeus.core.exceptions.CustomerNotFoundException
 import io.pleo.antaeus.core.exceptions.InsufficientBalanceException
 import io.pleo.antaeus.core.helper.PaymentProviderWrapper
 import io.pleo.antaeus.models.Invoice
@@ -26,12 +27,19 @@ class BillingService(
             paymentProviderWrapper.charge(invoice)
         } catch (e: InsufficientBalanceException) {
             handleInsufficientBalanceException(invoice)
+        }catch (e: CustomerNotFoundException) {
+            handleCustomerNotFoundException(invoice)
         }
         invoiceService.update(invoice.copy(status = newStatus))
     }
 
     private fun handleInsufficientBalanceException(invoice: Invoice): InvoiceStatus {
         logger.error("Balance of account '${invoice.customerId}' is less than amount of invoice '${invoice.id}'")
+        return InvoiceStatus.FAILED
+    }
+
+    private fun handleCustomerNotFoundException(invoice: Invoice): InvoiceStatus {
+        logger.error("Customer '${invoice.customerId}' was not found")
         return InvoiceStatus.FAILED
     }
 }
