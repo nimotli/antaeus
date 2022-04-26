@@ -14,6 +14,7 @@ import io.pleo.antaeus.core.helper.ThreadHelper
 import io.pleo.antaeus.core.services.BillingService
 import io.pleo.antaeus.core.services.CustomerService
 import io.pleo.antaeus.core.services.InvoiceService
+import io.pleo.antaeus.core.services.ScheduleService
 import io.pleo.antaeus.data.AntaeusDal
 import io.pleo.antaeus.data.CustomerTable
 import io.pleo.antaeus.data.InvoiceTable
@@ -81,6 +82,11 @@ fun main() {
         threadHelper = threadHelper
     )
 
+    val scheduleService = ScheduleService(
+        billingService = billingService
+    )
+
+    scheduleService.execute()
     // Create REST web service
     AntaeusRest(
         invoiceService = invoiceService,
