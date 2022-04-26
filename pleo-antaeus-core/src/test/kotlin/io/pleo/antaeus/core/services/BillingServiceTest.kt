@@ -70,7 +70,7 @@ class BillingServiceTest {
         every { paymentProviderWrapper.charge(aPendingInvoice) } throws CurrencyMismatchException(
             aPendingInvoice.id, aPendingInvoice.customerId
         )
-        every { invoiceService.update(aFailedInvoice) } returns aFailedInvoice
+        every { invoiceService.update(anInvalidInvoice) } returns anInvalidInvoice
         every { customerService.fetch(aPendingInvoice.customerId) } returns aUsdCustomer
         every { currencyConverter.convertMoneyTo(aPendingInvoice.amount, aUsdCustomer.currency) } returns aUsdMoney
         every { invoiceService.create(aUsdPendingInvoice) } returns aUsdPendingInvoice
@@ -78,7 +78,7 @@ class BillingServiceTest {
         billingService.processInvoices()
 
         verify { paymentProviderWrapper.charge(aPendingInvoice) }
-        verify { invoiceService.update(aFailedInvoice) }
+        verify { invoiceService.update(anInvalidInvoice) }
         verify { customerService.fetch(aPendingInvoice.customerId) }
         verify { invoiceService.create(aUsdPendingInvoice) }
         verify { currencyConverter.convertMoneyTo(aPendingInvoice.amount, aUsdCustomer.currency) }

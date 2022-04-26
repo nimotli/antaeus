@@ -42,4 +42,7 @@ val aFailedInvoice = aPendingInvoice.copy(
     status = InvoiceStatus.FAILED
 )
 
+val anInvalidInvoice = aPendingInvoice.copy(
+    status = InvoiceStatus.INVALID
+)
 val aUsdPendingInvoice = aPendingInvoice.copy(amount = aUsdMoney)

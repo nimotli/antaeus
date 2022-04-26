@@ -1,5 +1,6 @@
 package io.pleo.antaeus.core.services
 
+import io.pleo.antaeus.core.exceptions.CurrencyMismatchException
 import io.pleo.antaeus.core.exceptions.CustomerNotFoundException
 import io.pleo.antaeus.core.exceptions.InsufficientBalanceException
 import io.pleo.antaeus.core.external.CurrencyConverter
@@ -32,6 +33,8 @@ class BillingService(
             handleInsufficientBalanceException(invoice)
         }catch (e: CustomerNotFoundException) {
             handleCustomerNotFoundException(invoice)
+        }catch (e: CurrencyMismatchException) {
+            handleCurrencyMismatch(invoice)
         }
         invoiceService.update(invoice.copy(status = newStatus))
     }
@@ -44,5 +47,13 @@ class BillingService(
     private fun handleCustomerNotFoundException(invoice: Invoice): InvoiceStatus {
         logger.error("Customer '${invoice.customerId}' was not found")
         return InvoiceStatus.FAILED
+    }
+
+    private fun handleCurrencyMismatch(invoice: Invoice): InvoiceStatus {
+        logger.warn("Currency of invoice '${invoice.id}' does not match currency of customer '${invoice.customerId}'")
+        val customer = customerService.fetch(invoice.customerId)
+        val convertedAmount = currencyConverter.convertMoneyTo(invoice.amount, customer.currency)
+        invoiceService.create(invoice.copy(amount = convertedAmount))
+        return InvoiceStatus.INVALID
     }
 }
