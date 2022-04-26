@@ -12,6 +12,11 @@ val aEurCustomer = Customer(
     currency = Currency.EUR
 )
 
+val aUsdCustomer = Customer(
+    id = 1,
+    currency = Currency.USD
+)
+
 val aMoney = Money(
     currency = Currency.EUR,
     value = BigDecimal.valueOf(10)
@@ -29,6 +34,12 @@ val aPendingInvoice = Invoice(
     status = InvoiceStatus.PENDING
 )
 
-val aPaidInvoice = aPendingInvoice.copy(status = InvoiceStatus.PAID)
+val aPaidInvoice = aPendingInvoice.copy(
+    status = InvoiceStatus.PAID
+)
 
-val aFailedInvoice = aPendingInvoice.copy(status = InvoiceStatus.FAILED)
+val aFailedInvoice = aPendingInvoice.copy(
+    status = InvoiceStatus.FAILED
+)
+
+val aUsdPendingInvoice = aPendingInvoice.copy(amount = aUsdMoney)

@@ -2,6 +2,7 @@ package io.pleo.antaeus.core.services
 
 import io.pleo.antaeus.core.exceptions.CustomerNotFoundException
 import io.pleo.antaeus.core.exceptions.InsufficientBalanceException
+import io.pleo.antaeus.core.external.CurrencyConverter
 import io.pleo.antaeus.core.helper.PaymentProviderWrapper
 import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.models.InvoiceStatus
@@ -9,7 +10,9 @@ import mu.KotlinLogging
 
 class BillingService(
     private val paymentProviderWrapper: PaymentProviderWrapper,
-    private val invoiceService: InvoiceService
+    private val invoiceService: InvoiceService,
+    private val currencyConverter: CurrencyConverter,
+    private val customerService: CustomerService
 ) {
     companion object {
         private val logger = KotlinLogging.logger {}

@@ -3,8 +3,10 @@ package io.pleo.antaeus.core.services
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import io.pleo.antaeus.core.exceptions.CurrencyMismatchException
 import io.pleo.antaeus.core.exceptions.CustomerNotFoundException
 import io.pleo.antaeus.core.exceptions.InsufficientBalanceException
+import io.pleo.antaeus.core.external.CurrencyConverter
 import io.pleo.antaeus.core.helper.PaymentProviderWrapper
 import io.pleo.antaeus.models.InvoiceStatus
 import org.junit.jupiter.api.Test
@@ -12,10 +14,14 @@ import org.junit.jupiter.api.Test
 class BillingServiceTest {
     private val paymentProviderWrapper = mockk<PaymentProviderWrapper>()
     private val invoiceService = mockk<InvoiceService>()
+    private val currencyConverter = mockk<CurrencyConverter>()
+    private val customerService = mockk<CustomerService>()
 
     private val billingService = BillingService(
         paymentProviderWrapper = paymentProviderWrapper,
-        invoiceService = invoiceService
+        invoiceService = invoiceService,
+        currencyConverter = currencyConverter,
+        customerService = customerService
     )
 
     @Test
@@ -56,6 +62,26 @@ class BillingServiceTest {
 
         verify { paymentProviderWrapper.charge(aPendingInvoice) }
         verify { invoiceService.update(aFailedInvoice) }
+    }
+
+    @Test
+    fun `will handle currency mismatch`() {
+        every { invoiceService.fetchPending() } returns listOf(aPendingInvoice)
+        every { paymentProviderWrapper.charge(aPendingInvoice) } throws CurrencyMismatchException(
+            aPendingInvoice.id, aPendingInvoice.customerId
+        )
+        every { invoiceService.update(aFailedInvoice) } returns aFailedInvoice
+        every { customerService.fetch(aPendingInvoice.customerId) } returns aUsdCustomer
+        every { currencyConverter.convertMoneyTo(aPendingInvoice.amount, aUsdCustomer.currency) } returns aUsdMoney
+        every { invoiceService.create(aUsdPendingInvoice) } returns aUsdPendingInvoice
+
+        billingService.processInvoices()
+
+        verify { paymentProviderWrapper.charge(aPendingInvoice) }
+        verify { invoiceService.update(aFailedInvoice) }
+        verify { customerService.fetch(aPendingInvoice.customerId) }
+        verify { invoiceService.create(aUsdPendingInvoice) }
+        verify { currencyConverter.convertMoneyTo(aPendingInvoice.amount, aUsdCustomer.currency) }
     }
 
 }

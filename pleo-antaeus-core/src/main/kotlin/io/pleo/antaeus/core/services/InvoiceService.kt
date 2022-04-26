@@ -29,4 +29,12 @@ class InvoiceService(private val dal: AntaeusDal) {
             amount = invoice.amount
         )!!
     }
+
+    fun create(invoice: Invoice): Invoice{
+        return dal.createInvoice(
+            customerId = invoice.customerId,
+            status = invoice.status,
+            amount = invoice.amount
+        )!!
+    }
 }
