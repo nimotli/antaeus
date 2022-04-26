@@ -3,6 +3,7 @@ package io.pleo.antaeus.core.services
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import io.pleo.antaeus.core.exceptions.CustomerNotFoundException
 import io.pleo.antaeus.core.exceptions.InsufficientBalanceException
 import io.pleo.antaeus.core.helper.PaymentProviderWrapper
 import io.pleo.antaeus.models.InvoiceStatus
@@ -34,6 +35,20 @@ class BillingServiceTest {
         every { invoiceService.fetchPending() } returns listOf(aPendingInvoice)
         every { paymentProviderWrapper.charge(aPendingInvoice) } throws InsufficientBalanceException(
             aPendingInvoice.id, aPendingInvoice.customerId
+        )
+        every { invoiceService.update(aFailedInvoice) } returns aFailedInvoice
+
+        billingService.processInvoices()
+
+        verify { paymentProviderWrapper.charge(aPendingInvoice) }
+        verify { invoiceService.update(aFailedInvoice) }
+    }
+
+    @Test
+    fun `will handle customer not found`() {
+        every { invoiceService.fetchPending() } returns listOf(aPendingInvoice)
+        every { paymentProviderWrapper.charge(aPendingInvoice) } throws CustomerNotFoundException(
+            aPendingInvoice.customerId
         )
         every { invoiceService.update(aFailedInvoice) } returns aFailedInvoice
 
