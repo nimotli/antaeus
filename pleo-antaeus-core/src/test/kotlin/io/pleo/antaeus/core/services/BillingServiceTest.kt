@@ -10,6 +10,7 @@ import io.pleo.antaeus.core.exceptions.NetworkException
 import io.pleo.antaeus.core.external.CurrencyConverter
 import io.pleo.antaeus.core.helper.PaymentProviderWrapper
 import io.pleo.antaeus.core.helper.ThreadHelper
+import io.pleo.antaeus.core.services.BillingService.Companion.NETWORK_FAILURE_RETRY_COOLDOWN
 import io.pleo.antaeus.models.InvoiceStatus
 import org.junit.jupiter.api.Test
 
@@ -93,12 +94,12 @@ class BillingServiceTest {
         every { paymentProviderWrapper.charge(aPendingInvoice) } throws NetworkException()
         every { invoiceService.fetchPending() } returns listOf(aPendingInvoice)
         every { invoiceService.update(aFailedInvoice) } returns aFailedInvoice
-        every { threadHelper.sleep(BillingService.NETWORK_FAILURE_RETRY_COOLDOWN) } returns Unit
+        every { threadHelper.sleep(NETWORK_FAILURE_RETRY_COOLDOWN) } returns Unit
 
         billingService.processInvoices()
 
         verify(exactly = BillingService.MAX_NETWORK_FAILURES) { paymentProviderWrapper.charge(aPendingInvoice) }
-        verify(exactly = BillingService.MAX_NETWORK_FAILURES) { threadHelper.sleep(BillingService.NETWORK_FAILURE_RETRY_COOLDOWN) }
+        verify(exactly = BillingService.MAX_NETWORK_FAILURES) { threadHelper.sleep(NETWORK_FAILURE_RETRY_COOLDOWN) }
         verify { invoiceService.update(aFailedInvoice) }
     }
 

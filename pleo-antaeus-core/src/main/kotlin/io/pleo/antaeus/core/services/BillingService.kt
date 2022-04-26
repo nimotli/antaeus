@@ -32,16 +32,25 @@ class BillingService(
     }
 
     private fun processInvoice(invoice: Invoice) {
-        val newStatus = try {
-            paymentProviderWrapper.charge(invoice)
-        } catch (e: InsufficientBalanceException) {
-            handleInsufficientBalanceException(invoice)
-        }catch (e: CustomerNotFoundException) {
-            handleCustomerNotFoundException(invoice)
-        }catch (e: CurrencyMismatchException) {
-            handleCurrencyMismatch(invoice)
-        }catch (e: NetworkException) {
-            handleNetworkException(invoice)
+        var networkFailures = 0
+        var newStatus = InvoiceStatus.PENDING
+        while (networkFailures < MAX_NETWORK_FAILURES) {
+            try {
+                newStatus = paymentProviderWrapper.charge(invoice)
+                break
+            } catch (e: CurrencyMismatchException) {
+                newStatus = handleCurrencyMismatch(invoice)
+                break
+            } catch (e: InsufficientBalanceException) {
+                newStatus = handleInsufficientBalanceException(invoice)
+                break
+            } catch (e: CustomerNotFoundException) {
+                newStatus = handleCustomerNotFoundException(invoice)
+                break
+            } catch (e: NetworkException) {
+                networkFailures++
+                newStatus = handleNetworkException(invoice)
+            }
         }
         invoiceService.update(invoice.copy(status = newStatus))
     }
@@ -66,6 +75,7 @@ class BillingService(
 
     private fun handleNetworkException(invoice: Invoice): InvoiceStatus {
         logger.error("Network error while processing invoice '${invoice.id}'")
+        threadHelper.sleep(NETWORK_FAILURE_RETRY_COOLDOWN)
         return InvoiceStatus.FAILED
     }
 }
