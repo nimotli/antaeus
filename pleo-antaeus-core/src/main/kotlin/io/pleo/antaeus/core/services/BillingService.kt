@@ -3,6 +3,7 @@ package io.pleo.antaeus.core.services
 import io.pleo.antaeus.core.exceptions.CurrencyMismatchException
 import io.pleo.antaeus.core.exceptions.CustomerNotFoundException
 import io.pleo.antaeus.core.exceptions.InsufficientBalanceException
+import io.pleo.antaeus.core.exceptions.NetworkException
 import io.pleo.antaeus.core.external.CurrencyConverter
 import io.pleo.antaeus.core.helper.PaymentProviderWrapper
 import io.pleo.antaeus.models.Invoice
@@ -35,6 +36,8 @@ class BillingService(
             handleCustomerNotFoundException(invoice)
         }catch (e: CurrencyMismatchException) {
             handleCurrencyMismatch(invoice)
+        }catch (e: NetworkException) {
+            handleNetworkException(invoice)
         }
         invoiceService.update(invoice.copy(status = newStatus))
     }
@@ -55,5 +58,10 @@ class BillingService(
         val convertedAmount = currencyConverter.convertMoneyTo(invoice.amount, customer.currency)
         invoiceService.create(invoice.copy(amount = convertedAmount))
         return InvoiceStatus.INVALID
+    }
+
+    private fun handleNetworkException(invoice: Invoice): InvoiceStatus {
+        logger.error("Network error while processing invoice '${invoice.id}'")
+        return InvoiceStatus.FAILED
     }
 }
