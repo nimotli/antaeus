@@ -9,6 +9,7 @@ import io.pleo.antaeus.core.exceptions.InsufficientBalanceException
 import io.pleo.antaeus.core.exceptions.NetworkException
 import io.pleo.antaeus.core.external.CurrencyConverter
 import io.pleo.antaeus.core.helper.PaymentProviderWrapper
+import io.pleo.antaeus.core.helper.ThreadHelper
 import io.pleo.antaeus.models.InvoiceStatus
 import org.junit.jupiter.api.Test
 
@@ -17,12 +18,14 @@ class BillingServiceTest {
     private val invoiceService = mockk<InvoiceService>()
     private val currencyConverter = mockk<CurrencyConverter>()
     private val customerService = mockk<CustomerService>()
+    private val threadHelper = mockk<ThreadHelper>()
 
     private val billingService = BillingService(
         paymentProviderWrapper = paymentProviderWrapper,
         invoiceService = invoiceService,
         currencyConverter = currencyConverter,
-        customerService = customerService
+        customerService = customerService,
+        threadHelper = threadHelper
     )
 
     @Test
@@ -90,10 +93,12 @@ class BillingServiceTest {
         every { paymentProviderWrapper.charge(aPendingInvoice) } throws NetworkException()
         every { invoiceService.fetchPending() } returns listOf(aPendingInvoice)
         every { invoiceService.update(aFailedInvoice) } returns aFailedInvoice
+        every { threadHelper.sleep(BillingService.NETWORK_FAILURE_RETRY_COOLDOWN) } returns Unit
 
         billingService.processInvoices()
 
-        verify{ paymentProviderWrapper.charge(aPendingInvoice) }
+        verify(exactly = BillingService.MAX_NETWORK_FAILURES) { paymentProviderWrapper.charge(aPendingInvoice) }
+        verify(exactly = BillingService.MAX_NETWORK_FAILURES) { threadHelper.sleep(BillingService.NETWORK_FAILURE_RETRY_COOLDOWN) }
         verify { invoiceService.update(aFailedInvoice) }
     }
 
