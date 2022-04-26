@@ -28,3 +28,7 @@ val aPendingInvoice = Invoice(
     customerId = aEurCustomer.id,
     status = InvoiceStatus.PENDING
 )
+
+val aPaidInvoice = aPendingInvoice.copy(status = InvoiceStatus.PAID)
+
+val aFailedInvoice = aPendingInvoice.copy(status = InvoiceStatus.FAILED)
