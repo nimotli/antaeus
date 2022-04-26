@@ -1,12 +1,18 @@
 package io.pleo.antaeus.core.services
 
+import io.pleo.antaeus.core.exceptions.InsufficientBalanceException
 import io.pleo.antaeus.core.helper.PaymentProviderWrapper
 import io.pleo.antaeus.models.Invoice
+import io.pleo.antaeus.models.InvoiceStatus
+import mu.KotlinLogging
 
 class BillingService(
     private val paymentProviderWrapper: PaymentProviderWrapper,
     private val invoiceService: InvoiceService
 ) {
+    companion object {
+        private val logger = KotlinLogging.logger {}
+    }
 
     fun processInvoices() {
         val pendingInvoices = invoiceService.fetchPending()
@@ -16,6 +22,16 @@ class BillingService(
     }
 
     private fun processInvoice(invoice: Invoice) {
+        val newStatus = try {
+            paymentProviderWrapper.charge(invoice)
+        } catch (e: InsufficientBalanceException) {
+            handleInsufficientBalanceException(invoice)
+        }
+        invoiceService.update(invoice.copy(status = newStatus))
+    }
 
+    private fun handleInsufficientBalanceException(invoice: Invoice): InvoiceStatus {
+        logger.error("Balance of account '${invoice.customerId}' is less than amount of invoice '${invoice.id}'")
+        return InvoiceStatus.FAILED
     }
 }
