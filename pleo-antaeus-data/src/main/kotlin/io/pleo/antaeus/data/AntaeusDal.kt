@@ -9,6 +9,7 @@ package io.pleo.antaeus.data
 
 import io.pleo.antaeus.models.Currency
 import io.pleo.antaeus.models.Customer
+import io.pleo.antaeus.models.CustomerStatus
 import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.models.InvoiceStatus
 import io.pleo.antaeus.models.Money
@@ -116,6 +117,19 @@ class AntaeusDal(private val db: Database) {
             CustomerTable.insert {
                 it[this.currency] = currency.toString()
             } get CustomerTable.id
+        }
+
+        return fetchCustomer(id)
+    }
+
+    fun updateCustomer(id: Int, currency: Currency, status: CustomerStatus): Customer? {
+        transaction(db) {
+            // Update invoice.
+            CustomerTable
+                .update({ CustomerTable.id eq id }) {
+                    it[this.currency] = currency.toString()
+                    it[this.status] = status.toString()
+                }
         }
 
         return fetchCustomer(id)
