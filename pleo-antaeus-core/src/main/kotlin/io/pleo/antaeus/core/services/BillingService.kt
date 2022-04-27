@@ -18,6 +18,7 @@ class BillingService(
     private val invoiceService: InvoiceService,
     private val currencyConverter: CurrencyConverter,
     private val customerService: CustomerService,
+    //used this instead of Thread for mock-ability
     private val threadHelper: ThreadHelper
 ) {
     companion object {

@@ -10,6 +10,7 @@ class ScheduleService(
 
     fun execute() {
         GlobalScope.launch {
+            //Process invoices at every hour in the first day of every month
             doInfinity("1 1 * 1 *", block = {
                 billingService.processInvoices()
             })
