@@ -67,7 +67,7 @@ class BillingServiceTest {
 
         billingService.processInvoices()
 
-        verify { paymentProviderWrapper.charge(aPendingInvoice) }
+        verify { paymentProviderWrapper.charge(any()) }
         verify { invoiceService.update(aFailedInvoice) }
     }
 
