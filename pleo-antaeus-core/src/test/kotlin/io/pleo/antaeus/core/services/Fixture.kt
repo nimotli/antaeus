@@ -2,6 +2,7 @@ package io.pleo.antaeus.core.services
 
 import io.pleo.antaeus.models.Currency
 import io.pleo.antaeus.models.Customer
+import io.pleo.antaeus.models.CustomerStatus
 import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.models.InvoiceStatus
 import io.pleo.antaeus.models.Money
@@ -9,12 +10,14 @@ import java.math.BigDecimal
 
 val aEurCustomer = Customer(
     id = 1,
-    currency = Currency.EUR
+    currency = Currency.EUR,
+    status = CustomerStatus.ACTIVE
 )
 
 val aUsdCustomer = Customer(
     id = 1,
-    currency = Currency.USD
+    currency = Currency.USD,
+    status = CustomerStatus.ACTIVE
 )
 
 val aMoney = Money(

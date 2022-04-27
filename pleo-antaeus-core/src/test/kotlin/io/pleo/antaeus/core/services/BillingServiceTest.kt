@@ -48,11 +48,13 @@ class BillingServiceTest {
             aPendingInvoice.id, aPendingInvoice.customerId
         )
         every { invoiceService.update(aFailedInvoice) } returns aFailedInvoice
+        every {customerService.suspendCustomer(aFailedInvoice.customerId)} returns Unit
 
         billingService.processInvoices()
 
         verify { paymentProviderWrapper.charge(aPendingInvoice) }
         verify { invoiceService.update(aFailedInvoice) }
+        verify { customerService.suspendCustomer(aFailedInvoice.customerId) }
     }
 
     @Test

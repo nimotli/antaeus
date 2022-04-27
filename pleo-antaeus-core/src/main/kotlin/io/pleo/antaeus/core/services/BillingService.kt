@@ -57,6 +57,7 @@ class BillingService(
 
     private fun handleInsufficientBalanceException(invoice: Invoice): InvoiceStatus {
         logger.error("Balance of account '${invoice.customerId}' is less than amount of invoice '${invoice.id}'")
+        customerService.suspendCustomer(invoice.customerId)
         return InvoiceStatus.FAILED
     }
 
