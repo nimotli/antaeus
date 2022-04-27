@@ -9,6 +9,8 @@ import io.pleo.antaeus.core.helper.PaymentProviderWrapper
 import io.pleo.antaeus.core.helper.ThreadHelper
 import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.models.InvoiceStatus
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
 class BillingService(
@@ -20,14 +22,16 @@ class BillingService(
 ) {
     companion object {
         private val logger = KotlinLogging.logger {}
-        val MAX_NETWORK_FAILURES = 2
-        val NETWORK_FAILURE_RETRY_COOLDOWN: Long = 300000
+        const val MAX_NETWORK_FAILURES = 2
+        const val NETWORK_FAILURE_RETRY_DELAY: Long = 300000
     }
 
     fun processInvoices() {
         val pendingInvoices = invoiceService.fetchPending()
         pendingInvoices.forEach {
-            processInvoice(it)
+            GlobalScope.launch {
+                processInvoice(it)
+            }
         }
     }
 
@@ -76,7 +80,7 @@ class BillingService(
 
     private fun handleNetworkException(invoice: Invoice): InvoiceStatus {
         logger.error("Network error while processing invoice '${invoice.id}'")
-        threadHelper.sleep(NETWORK_FAILURE_RETRY_COOLDOWN)
+        threadHelper.sleep(NETWORK_FAILURE_RETRY_DELAY)
         return InvoiceStatus.FAILED
     }
 }
